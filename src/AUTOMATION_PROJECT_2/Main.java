@@ -10,6 +10,7 @@ import org.testng.Assert;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -39,6 +40,12 @@ public class Main {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime sixMonthsLater = now.plusMonths( (int)(Math.random()*72) ) ;
         return dtf.format(sixMonthsLater);
+    }
+
+    public static String getDate(){
+        LocalDateTime myDateObj = LocalDateTime.now();
+        DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+        return myDateObj.format(myFormatObj);
     }
     public static void main(String[] args) throws InterruptedException {
 
@@ -73,8 +80,8 @@ public class Main {
                 data[1],Keys.TAB,
                 data[2],Keys.TAB,
                 data[3],Keys.TAB,
-                data[4],Keys.TAB
-        );
+                data[4],Keys.TAB);
+
         int cardType = (int)(Math.random()*3);
         String cardNumber = generateCardNumber(cardType);
         String expirationDate = generateExpirationDate();
@@ -84,28 +91,36 @@ public class Main {
         driver.findElement(By.id("ctl00_MainContent_fmwOrder_InsertButton")).click();
         driver.findElement(By.xpath("//a[text()='View all orders']")).click();
 
-        List<String> webSiteEntries= new ArrayList<>();
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[2]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[6]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[7]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[8]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[9]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[10]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[11]")).getText());
-        webSiteEntries.add(driver.findElement(By.xpath("//tbody//tbody//td[12]")).getText());
+        List<String> expectedResult = new ArrayList<>(Arrays.asList(
+                data[0],
+                "MyMoney",
+                randomQt,
+                getDate(),
+                data[1],
+                data[2],
+                data[3],
+                data[4],
+                (cardType==0 ?"Visa": cardType==1 ?"MasterCard":"American Express"),//card type
+                cardNumber,
+                expirationDate));
+
+
+         List<String> actualResult = new ArrayList<>();
+         List<WebElement> row = driver.findElements(By.xpath("//tbody//tr//tr[2]//td"));
+
+        for (WebElement column:row) {
+            actualResult.add(column.getText());
+        }
+
+        //deleting unnecessary parts from that row to obtain the same size with the list of expectedResult.
+        actualResult.remove(0);
+        actualResult.remove(actualResult.size()-1);
+
+        Assert.assertEquals(actualResult,expectedResult);
 
 
 
-         Assert.assertEquals(webSiteEntries.get(0), data[0]); //full name
-         Assert.assertEquals(webSiteEntries.get(1), data[1]); //street
-         Assert.assertEquals(webSiteEntries.get(2), data[2]); //city
-         Assert.assertEquals(webSiteEntries.get(3), data[3]); //state
-         Assert.assertEquals(webSiteEntries.get(4), data[4]); //zip
-         Assert.assertEquals(webSiteEntries.get(5), (cardType==0 ?"Visa": cardType==1 ?"MasterCard":"American Express")); //card type
-         Assert.assertEquals(webSiteEntries.get(6), cardNumber);//card number
-         Assert.assertEquals(webSiteEntries.get(7), expirationDate);//expiration date
-
-         driver.findElement(By.id("ctl00_logout")).click();
+        driver.findElement(By.id("ctl00_logout")).click();
 
         System.out.println("ALL STEPS ARE PASSED!!!");
 
